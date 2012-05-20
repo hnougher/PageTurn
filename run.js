@@ -1,237 +1,210 @@
-var book = function (book) {
+﻿var Book = function (book) {
 	var self = this;
 	this.$book = $(book);
-	this.$book.addClass("pageturn");
-	this.activePages = [];
+	this.$book.addClass("book");
+	this.AllPages = [];
+	this.isUpdating = false;
 	
-	/*var children = this.$book.children();
-	for (var i = 0; i < children.length; i++) {
-		var $child = children.eq(i).addClass("page");
-		var $div = $("<div class='fakepage'>").attr("page", $child.attr("page"));
-		$child.removeAttr("page");
-		$child.before($div);
-		$div.append($child);
-	}*/
-	this.pages = [];
 	var children = this.$book.children();
-	for (var i = 0; i < children.length; i++)
-		this.pages.push(new page(children.eq(i)));
-	
-	this.$book.on("click", ".fakepage[page=left]", function (e) {
-		self.previousPage();
-		});
-	this.$book.on("click", ".fakepage[page=right]", function (e) {
-		self.nextPage();
-		});
-	
-	this.navigateTo(0);
-};
-book.prototype = {
-	// Private Vars
-	$book: null,
-	currentPage: 0,
-	
-	// Start on 1+2, Click Next to goto 3+4
-	// set depths: 1=x, 2=x+1, 4=x
-	// 4 set visible
-	// 2 flips up
-	// 2 set hidden
-	// set depths: 3=x+1
-	// 3 set visible
-	// 3 flips down
-	// 1 is hidden
-	// set depths: 3=x, 4=x
-	
-	navigateTo: function (page) {
-		var curZ = this.pages.length;
-		for (var i = 0; i < this.pages.length; i++) {
-			if (this.pages[i].page < page) {
-				this.pages[i].state("prev").depth(++curZ);
-			}
-			else if (this.pages[i].page > page) {
-				this.pages[i].state("next").depth(--curZ);
-			}
-			else {
-				this.pages[i].state("show").depth(++curZ);
-			}
-		}
-		
-		this.currentPage = page;
-	},
-	navigateTo_action1: function (oldPage, newPage) {
-		//var curZ = this.pages.length; // This is our base, animated pages will be layered on top
-		var curZ = 10; // This is our base, animated pages will be layered on top
-		
-		
-		
-		for (var i = 0; i < this.pages.length; i++) {
-			if (this.pages[i].page < page) {
-				this.pages[i].state("prev").depth(++curZ);
-			}
-			else if (this.pages[i].page > page) {
-				this.pages[i].state("next").depth(--curZ);
-			}
-			else {
-				this.pages[i].state("show").depth(++curZ);
-			}
-		}
-	},
-	
-	nextPage: function () {
-		this.navigateTo(this.currentPage + 1);
-	},
-	previousPage: function () {
-		this.navigateTo(this.currentPage - 1);
+	for (var i = 0; i < children.length; i++) {
+		var p = new Page(children.eq(i), this);
+		var pp = this.getPagePair(p.pageNumber);
+		pp.addPage(p);
 	}
+	
+	this.currentPage = this.AllPages[0]; // The page that was last fully shown
+	this.goingToPage = this.AllPages[0]; // The page we are actively transitioning to
+	this.aimForPage = this.AllPages[0]; // The page that we are trying to get to
+	
+	this.bookInit();
 };
-
-var pagePair = function (pageNumber) {
-	this.pageNumber = pageNumber;
-	this.pages = {left: null, right: null};
+Book.prototype = {
+	bookInit: function () {
+		this.navigateTo(0);
+	},
 	
-	this.currentAction = 0; // 0=none, 1=hiding2prev, 2=showingfromprev, 3=showingfromnext, 4=hiding2next
-	this.state = 0; // 0=next, 1=, 1=page1action, 2=page2action
-	
-	this.nextPage = null; // Should be a pagePair Object
-	this.prevPage = null; // Should be a pagePair Object
-}
-pagePair.prototype = {
-	// Static Var
-	_AllPages: [],
-	
-	// Static Methods
 	// Finds the index of the page number in _AllPages or the next item in the list as negative index
-	_FindGEPageIndex: function (pageNumber) {
-		var pages = pagePair.prototype._AllPages;
+	findGEPageIndex: function (pageNumber) {
 		// TODO: binary search
-		for (var i = 0; i < pages.length; i++) {
-			if (pages[i].pageNumber >= pageNumber)
+		for (var i = 0; i < this.AllPages.length; i++) {
+			if (this.AllPages[i].pageNumber >= pageNumber)
 				return i;
 		}
-		return pages.length;
+		return this.AllPages.length;
 	},
-	_IsPageIndex: function (index, pageNumber) {
-		return (pagePair.prototype._AllPages[index].pageNumber == pageNumber);
+	isPageIndex: function (index, pageNumber) {
+		if (index < 0 || index >= this.AllPages.length)
+			return false;
+		return (this.AllPages[index].pageNumber == pageNumber);
 	},
-	GetPagePair: function (pageNumber) {
-		var pages = pagePair.prototype._AllPages;
-		var indexFound = pagePair.prototype._FindGEPageIndex(pageNumber);
+	getPagePair: function (pageNumber) {
+		var indexFound = this.findGEPageIndex(pageNumber);
 		
 		// Already exists
-		if (pagePair.prototype._IsPageIndex(indexFound, pageNumber))
-			return pages[indexFound];
+		if (this.isPageIndex(indexFound, pageNumber))
+			return this.AllPages[indexFound];
 		
 		// Make a new pagePair
-		var page = new pagePair(pageNumber);
+		var page = new PagePair(pageNumber);
 		
 		// Fix Prev/Next page sets
-		if (indexFound > 0) {
-			page.prevPage = pages[indexFound - 1];
-			pages[indexFound - 1].nextPage = page;
+		/*if (indexFound > 0) {
+			page.prevPage = this.AllPages[indexFound - 1];
+			this.AllPages[indexFound - 1].nextPage = page;
 		}
-		if (indexFound < pages.length) {
-			page.nextPage = pages[indexFound];
-			pages[indexFound].prevPage = page;
-		}
+		if (indexFound < this.AllPages.length) {
+			page.nextPage = this.AllPages[indexFound];
+			this.AllPages[indexFound].prevPage = page;
+		}*/
 		
 		// Insert new pagePair
-		pages.splice(indexFound, 0, page);
+		this.AllPages.splice(indexFound, 0, page);
 		return page;
 	},
 	
-	// Member Methods
-	// Action must be 1 to 4 relating to currentAction
-	startAction: function (action) {
-		switch (this.currentAction) {
-		case 1:
-			switch (action) {
-			case 2:
-			case 1: break; // Continue what we are doing
-			default: throw "Invalid action given current state";
-			}
-		case 0: default:
-			switch (action) {
-			case 1:
-				
-			default: throw "Invalid action";
-			}
-		}
+	navigateTo: function (page) {
+		// TODO: test page is valid
+		if (page < 0 || page >= this.AllPages.length) return;
+		this.aimForPage = this.getPagePair(page);
+		this.doUpdate();
 	},
 	
-	onStartTransition: function () { // Before first page starts moving
-		var self = this;
-		if (this.currentAction == 1) { // hiding2prev
-			this.state = 2;
-			this.nextpage.currentAction = 3; // showingFromNext
-			this.nextpage.state = 2;
-			this.nextpage.pages.right.show();
-			//this.nextPage.startAction(3); // showingfromnext
-			this.pages.right.animateShowPrev(function(){self.onHalfTransition()});
-		}
-		else if (this.currentAction == 4) { // hiding2next
-			this.state = 1;
-			this.prevPage.currentAction = 2; // showingFromPrev
-			this.prevPage.state = 1;
-			this.prevPage.pages.left.show();
-			//this.prevPage.startAction(2); // showingfromprev
-			this.pages.left.animateShowNext(function(){self.onHalfTransition()});
-		}
+	nextPage: function () {
+		this.navigateTo(this.aimForPage.pageNumber + 1);
 	},
-	onHalfTransition: function () { // as soon as first page finishes transition but before the second one starts
-		var self = this;
-		if (this.currentAction == 1) { // hiding2prev
-			this.state = 1;
-			this.pages.right.hide();
-			this.nextPage.state = 1;
-			this.nextPage.pages.left.show();
-			this.nextPage.pages.left.animateNextShow(function(){self.onEndTransition()});
-			//this.nextPage.startAction(3); // showingfromnext
-			//this.pages.left.animateShowPrev();
-		}
-		else if (this.currentAction == 4) { // hiding2next
-			this.state = 2;
-			this.pages.left.hide();
-			this.prevPage.state = 2;
-			this.prevPage.pages.right.show();
-			this.prevPage.pages.right.animatePrevShow(function(){self.onEndTransition()});
-			//this.prevPage.startAction(2); // showingfromprev
-			//this.pages.right.animateShowNext();
-		}
+	previousPage: function () {
+		this.navigateTo(this.aimForPage.pageNumber - 1);
 	},
-	onEndTransition: function () { // as soon as the second page finishes moving
-		this.currentAction = 0;
-		this.state = 0;
-		this.pages.left.hide();
-		this.pages.right.hide();
-		this.book.nextAction();
-	},
+	
+	doUpdate: function () {
+		//console.log("doUpdate()", this.currentPage, this.goingToPage, this.aimForPage);
+		if (this.goingToPage.pageNumber < this.currentPage.pageNumber) {
+			// We are continuing
+			this.goingToPage.finishShow("previous");
+			this.currentPage.finishHide("previous");
+			this.currentPage = this.goingToPage;
+		}
+		else if (this.goingToPage.pageNumber > this.currentPage.pageNumber) {
+			// We are continuing
+			this.goingToPage.finishShow("next");
+			this.currentPage.finishHide("next");
+			this.currentPage = this.goingToPage;
+		}
+		
+		if (this.aimForPage.pageNumber < this.goingToPage.pageNumber) {
+			// We are starting
+			this.aimForPage.startShow("previous");
+			this.goingToPage.startHide("previous");
+			this.goingToPage = this.aimForPage;
+		}
+		else if (this.aimForPage.pageNumber > this.goingToPage.pageNumber) {
+			// We are starting
+			this.aimForPage.startShow("next");
+			this.goingToPage.startHide("next");
+			this.goingToPage = this.aimForPage;
+		}
+	}
 };
 
-var page = function (page) {
-	this.$page = $(page).addClass("page");
-	this.$fakepage = $("<div class='fakepage'>");
-	this.layout = this.$page.attr("layout");
-	this.page = parseInt(this.$page.attr("page"));
-	this.$page.removeAttr("layout").removeAttr("page").before(this.$fakepage);
-	this.$fakepage.append(this.$page);
+var PagePair = function (pageNumber) {
+	this.pageNumber = pageNumber;
+	this.pages = {left: null, right: null};
 	
-	this.$fakepage.css("left", "50%").css("width", "0%");
+	//this.currentAction = 0; // 0=none, 1=hiding2prev, 2=showingfromprev, 3=showingfromnext, 4=hiding2next
+	//this.state = 0; // 0=next, 1=, 1=page1action, 2=page2action
+	
+	//this.nextPage = null; // Should be a pagePair Object
+	//this.prevPage = null; // Should be a pagePair Object
 }
-page.prototype = {
-	layout: "left", // left, right, both
-	_state: "prev", // prev, show, next
-	page: 0,
-	
-	state: function (state) {
-		//console.log("set state", state, "page", this.page);
-		switch (state) {
-			case "show": this.animateShow(); break;
-			case "next": this.animateNext(); break;
-			case "prev": this.animatePrev(); break;
-			default: return;
+PagePair.prototype = {
+	addPage: function (page) {
+		switch (page.layout) {
+		case "left": this.pages.left = page; break;
+		case "right": this.pages.right = page; break;
+		default: throw "Not supported page layout";
 		}
-		this._state = state;
-		return this;
+	},
+	
+	startShow: function (type) {
+		switch (type) {
+		case "previous":
+			if (this.pages.left)
+				this.pages.left.show("left");
+			break;
+		case "next":
+			if (this.pages.right)
+				this.pages.right.show("right");
+			break;
+		}
+	},
+	finishShow: function (type) {
+		switch (type) {
+		case "previous":
+			if (this.pages.right)
+				this.pages.right.animateShow("right");
+			break;
+		case "next":
+			if (this.pages.left)
+				this.pages.left.animateShow("left");
+			break;
+		}
+	},
+	startHide: function (type) {
+		switch (type) {
+		case "previous":
+			if (this.pages.left)
+				this.pages.left.animateHide("left");
+			break;
+		case "next":
+			if (this.pages.right)
+				this.pages.right.animateHide("right");
+			break;
+		}
+	},
+	finishHide: function (type) {
+		switch (type) {
+		case "previous":
+			if (this.pages.right)
+				this.pages.right.delayHide("right");
+			break;
+		case "next":
+			if (this.pages.left)
+				this.pages.left.delayHide("left");
+			break;
+		}
+	}
+};
+
+var Page = function (page, book) {
+	var self = this;
+	this.book = book;
+	
+	this.$page = $(page).addClass("page");
+	this.layout = this.$page.attr("layout");
+	this.pageNumber = parseInt(this.$page.attr("page"));
+	this.$page.removeAttr("layout").removeAttr("page");
+	
+	this.prepairPage();
+	
+	if (this.pageNumber != 0)
+		this.hide(this.layout);
+	else
+		this.animateShow(this.layout);
+		//this.show(this.layout);
+	
+	this._doBookUpdate = function (e) {
+		self.depth(5);
+		self.book.doUpdate();
+	};
+}
+Page.prototype = {
+	layout: "left", // left, right, both
+	pageNumber: 0,
+	
+	prepairPage: function () {
+		this.$fakepage = $("<div class='fakepage'>");
+		this.$page.before(this.$fakepage);
+		this.$fakepage.append(this.$page);
 	},
 	
 	depth: function (depth) {
@@ -242,55 +215,66 @@ page.prototype = {
 		return this;
 	},
 	
-	// Animate from state of being Prev to Shown
-	animateShow: function () {
-		if (this.layout == "left") {
-			this.$fakepage.animate({
-				left: "0%",
-				width: "50%"
-			}, 1000);
+	show: function (side) {
+		switch (side) {
+		case "left": this.$fakepage.css({left:"0%", width:"50%"}); break;
+		case "right": this.$fakepage.css({left:"50%", width:"50%"}); break;
 		}
-		else if (this.layout == "right") {
-			this.$fakepage.animate({
-				left: "50%",
-				width: "50%"
-			}, 1000);
-		}
+		this.$fakepage.show();
+	},
+	hide: function (side) {
+		this.$fakepage.hide();
+	},
+	delayHide: function (side) {
+		var self = this;
+		window.setTimeout(function(){self.hide()}, 1000);
 	},
 	
-	animateNext: function () {
-		if (this.layout == "left") {
-			this.$fakepage.animate({
-				left: "50%",
-				width: "0%"
-			}, 1000);
-		}
-		else if (this.layout == "right") {
-			this.$fakepage.animate({
-				left: "50%",
-				width: "50%"
-			}, 1000);
+	animateShow: function (side) {
+		this.depth(6);
+		this.$fakepage.show();
+		switch (side) {
+		case "left":
+			this.$fakepage.css({left:"50%", width:"0%"});
+			this.$fakepage.animate({left:"0%", width:"50%"},
+			{duration: 1000, easing: "easeOutExpo", complete: this._doBookUpdate});
+			break;
+		case "right":
+			this.$fakepage.css({left:"50%", width:"0%"});
+			this.$fakepage.animate({width:"50%"},
+			{duration: 1000, easing: "easeOutExpo", complete: this._doBookUpdate});
+			break;
 		}
 	},
-	animatePrev: function () {
-		if (this.layout == "left") {
-			this.$fakepage.animate({
-				left: "0%",
-				width: "50%"
-			}, 1000);
-		}
-		else if (this.layout == "right") {
-			this.$fakepage.animate({
-				left: "50%",
-				width: "0%"
-			}, 1000);
+	animateHide: function (side) {
+		var self = this;
+		this.depth(6);
+		switch (side) {
+		case "left":
+			this.$fakepage.css({left:"0%", width: "50%"});
+			this.$fakepage.animate({left:"50%", width: "0%"},
+				{duration: 1000, easing: "easeInExpo",
+				complete: function () {
+					self.hide();
+					self._doBookUpdate();
+				}});
+			break;
+		case "right":
+			this.$fakepage.css({left:"50%", width: "50%"});
+			this.$fakepage.animate({width: "0%"},
+				{duration: 1000, easing: "easeInExpo",
+				complete: function () {
+					self.hide();
+					self._doBookUpdate();
+				}});
+			break;
 		}
 	}
 };
 
 $(function () {
-	var bookx = new book(document.getElementById("book"));
-	var $prev = $("<a href='#'>Previous</a>").on("click", function () { bookx.previousPage(); });
-	var $next = $("<a href='#'>Next</a>").on("click", function () { bookx.nextPage(); });
+	var book = new Book(document.getElementById("book"));
+	var $prev = $("<a href='#'>Previous</a>").on("click", function () { book.previousPage(); });
+	var $next = $("<a href='#'>Next</a>").on("click", function () { book.nextPage(); });
 	$("body").prepend($next).prepend($prev);
 });

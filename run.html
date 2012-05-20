@@ -1,50 +1,93 @@
-<html>
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 
+	<!-- Tell IE to use the most recent mode possible (ie: use IE9 mode when in IE9) -->
+	<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+	
 	<style type="text/css">
-		.pageturn {
+		body {
+			background: #ACF;
+		}
+		.book {
 			border: 1px solid #F00;
+			box-shadow: 5px 5px 15px rgba(0,0,0,0.5);
 			height: 600px;
-			/*overflow: hidden;*/
 			position: absolute;
 			width: 800px;
 		}
-		.pageturn .page {
+		.book .page {
 			background: white;
-			border: 1px solid #0F0;
-			height: 600px;
+			/*border: 1px solid #0F0;*/
+			height: 100%;
+			overflow: auto;
 			position: absolute;
-			width: 400px;
+			top: 0%;
+			width: 100%;
 		}
-		.pageturn .fakepage {
-			border: 1px solid #00F;
+		.book .clippage {
+			/*border: 1px solid #0FF;*/
 			height: 100%;
 			left: 0%;
 			overflow: hidden;
 			position: absolute;
-			width: 50%;
-			/*visibility: hidden;*/
+			top: 0%;
+			width: 100%;
+		}
+		.book .fakepage {
+			/*border: 1px solid #00F;*/
+			height: 100%;
+			left: 0%;
+			overflow: visible;
+			position: absolute;
+			width: 100%;
+		}
+		.book * {
+			-webkit-backface-visibility: hidden; /* anit-alias edge hack chrome */
+			outline: 1px solid transparent; /* anti-alias edge hack firefox */
+		}
+		.book .page.showing, .book .page.hiding {
+			overflow: hidden;
+		}
+		.book .page.showing {
+			box-shadow: 7px 7px 15px #000; /* IE9+ */
 		}
 	</style>
 
 	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.18/jquery-ui.min.js"></script>
+	<script type="text/javascript" src="jquery.transform-0.9.3.js"></script>
 	<script type="text/javascript" src="run.js"></script>
+	<!-- script type="text/javascript" src="animate-page-complex.js"></script -->
 
 </head>
 <body>
 
 <div id="book">
-	<div page="0" layout="right">
-		This is page 1!
+	<div page="0" layout="right" style="background: #444; text-align: justify">
+		<h1>This is page 1!<br/>Its super cool because it should really contain a title of some sort! And then we just add some more text to the end to see if all the wrapping is working fine!</h1>
+		<embed src="http://flash-clocks.com/free-flash-clocks-blog-topics/free-flash-clock-188.swf" width="380" height="380" wmode="transparent" type="application/x-shockwave-flash"></embed>
 	</div>
-	<div page="1" layout="left">
+	<div page="1" layout="left" style="background: #000 url(Abstract_Wallpapers_73.jpg)">
 		This is page 2!
 	</div>
-	<div page="1" layout="right">
-		This is page 3!
+	<div page="1" layout="right" style="overflow:hidden">
+		<img src="rainbow-abstract.jpg" style="height:100%; width:100%"/>
 	</div>
 	<div page="2" layout="left">
 		This is page 4!
+		<embed src="http://www.youtube-nocookie.com/v/8hRgzRSazIs?version=3&amp;hl=en_US&amp;rel=0" type="application/x-shockwave-flash" width="420" height="315" wmode=transparent allowscriptaccess="always" allowfullscreen="true"></embed>
+	</div>
+	<div page="2" layout="right">
+		This is page 5!
+	</div>
+	<div page="3" layout="left">
+		This is page 6!
+	</div>
+	<div page="3" layout="right">
+		This is page 7!
 	</div>
 </div>
 
