@@ -555,9 +555,10 @@ Page.prototype.calcTransform = function calcTransform(startPoint, pullPoint, isH
 	//console.log("2", isHiding, x2, y2, ox2, oy2);
 	
 	// Calc $page
-	var r3, ox3, oy3 = 0, x3, y3;
-	ox3 = ox2;
-	y3 = -y2;
+	var ox3 = ox2,
+		oy3 = 0,
+		y3 = -y2,
+		r3, x3;
 	if (isHiding) {
 		r3 = -r2;
 		x3 = -x2;
@@ -572,26 +573,20 @@ Page.prototype.calcTransform = function calcTransform(startPoint, pullPoint, isH
 	
 	// Calc $gradient if exists
 	if (this.$gradient) {
-		var r4, ox4, oy4, x4, y4, h4, w4, sx4, o4;
+		var h4 = boxSize.Y() * 2,
+			w4 = boxSize.X(),
+			r4 = -r3,
+			ox4 = 0,
+			oy4 = 25,
+			y4 = y2 - 0.25 * h4 + this.$page.scrollTop(),
+			sx4, x4, o4;
 		if (isGoRight) {
-			h4 = boxSize.Y() * 2;
-			w4 = boxSize.X();
-			r4 = -r3;
-			ox4 = 0;
-			oy4 = 25;
 			sx4 = startPoint.distTo(pullPoint) / (boxSize.X() * 2);
 			x4 = -x3 + this.$page.scrollLeft();
-			y4 = y2 - 0.25 * h4 + this.$page.scrollTop();
 		}
 		else {
-			h4 = boxSize.Y() * 2;
-			w4 = boxSize.X();
-			r4 = -r3;
-			ox4 = 0;
-			oy4 = 25;
 			sx4 = -startPoint.distTo(pullPoint) / (boxSize.X() * 2);
 			x4 = boxSize.X() - x3 + this.$page.scrollLeft();
-			y4 = y2 - 0.25 * h4 + this.$page.scrollTop();
 		}
 		o4 = 1 - Math.abs(sx4);
 		
