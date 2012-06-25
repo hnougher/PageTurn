@@ -546,32 +546,24 @@ Page.prototype.calcTransform = function calcTransform(startPoint, pullPoint, isH
 	var oy2 = 25, x2, y2;
 	if (isGoRight) {
 		x2 = restrictFromTo(0, perpToPull.X(0), boxSize.X());
-		y2 = restrictFromTo(0, (r2 >= 0 ? 0 : perpToPull.Y(0)), boxSize.Y());
+		y2 = (r2 >= 0 ? 0 : restrictFromTo(0, perpToPull.Y(0), boxSize.Y()));
 	} else {
 		x2 = restrictFromTo(-boxSize.X(), perpToPull.X(0) - boxSize.X(), 0);
-		y2 = restrictFromTo(0, (r2 < 0 ? 0 : perpToPull.Y(boxSize.X())), boxSize.Y());
+		y2 = (r2 < 0 ? 0 : restrictFromTo(0, perpToPull.Y(boxSize.X()), boxSize.Y()));
 		//x2 += 4;
 	}
 	//console.log("2", isHiding, x2, y2, ox2, oy2);
 	
 	// Calc $page
 	var r3, ox3, oy3 = 0, x3, y3;
+	ox3 = ox2;
+	y3 = -y2;
 	if (isHiding) {
 		r3 = -r2;
-		ox3 = ox2;
 		x3 = -x2;
-		y3 = -y2;
 	} else {
 		r3 = r2;
-		if (isGoRight) {
-			ox3 = restrictFromTo(0, pullPoint.X() / boxSize.X(), 100);
-			x3 = restrictFromTo(-boxSize.X(), perpToPull.X(0) - boxSize.X(), 0);
-			y3 = (r2 >= 0 ? 0 : -restrictFromTo(0, perpToPull.Y(0), boxSize.Y()));
-		} else {
-			ox3 = 100 - restrictFromTo(0, pullPoint.X() / boxSize.X(), 100);
-			x3 = restrictFromTo(0, perpToPull.X(0), boxSize.X());
-			y3 = (r2 < 0 ? 0 : -restrictFromTo(0, perpToPull.Y(boxSize.X()), boxSize.Y()));
-		}
+		x3 = x2 + (isGoRight ? -boxSize.X() : boxSize.X());
 	}
 	//console.log("3", isHiding, x3, y3, ox3, oy3);
 	
