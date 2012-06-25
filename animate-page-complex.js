@@ -541,22 +541,36 @@ Page.prototype.calcTransform = function calcTransform(startPoint, pullPoint, isH
 	//console.log("1", isHiding, startPoint._toString(), pullPoint._toString(), lineToPull._toString(), perpToPull._toString());
 	
 	// Calc $clippage
-	var r2 = TOA(perpToPull.X(0), perpToPull.Y(0)).toFixed(10);
-	var ox2 = (isGoRight ? 0 : 100);
-	var oy2 = 25, x2, y2;
+	var r2 = TOA(perpToPull.X(0), perpToPull.Y(0)).toFixed(10),
+		ox2 = (isGoRight ? 0 : 100),
+		oy2, x2, y2;
+	var r2LTZero = (r2 < 0);
 	if (isGoRight) {
-		x2 = restrictFromTo(0, perpToPull.X(0), boxSize.X());
-		y2 = (r2 >= 0 ? 0 : restrictFromTo(0, perpToPull.Y(0), boxSize.Y()));
+		if (r2LTZero) {
+			oy2 = 75;
+			x2 = restrictFromTo(0, perpToPull.X(boxSize.Y()), boxSize.X());
+			y2 = restrictFromTo(0, perpToPull.Y(0) - boxSize.Y(), boxSize.Y());
+		} else {
+			oy2 = 25;
+			x2 = restrictFromTo(0, perpToPull.X(0), boxSize.X());
+			y2 = 0;
+		}
 	} else {
-		x2 = restrictFromTo(-boxSize.X(), perpToPull.X(0) - boxSize.X(), 0);
-		y2 = (r2 < 0 ? 0 : restrictFromTo(0, perpToPull.Y(boxSize.X()), boxSize.Y()));
-		//x2 += 4;
+		if (r2LTZero) {
+			oy2 = 25;
+			x2 = restrictFromTo(-boxSize.X(), perpToPull.X(0) - boxSize.X(), 0);
+			y2 = 0;
+		} else {
+			oy2 = 75;
+			x2 = restrictFromTo(-boxSize.X(), perpToPull.X(boxSize.Y()) - boxSize.X(), 0);
+			y2 = restrictFromTo(0, perpToPull.Y(boxSize.X()) - boxSize.Y(), boxSize.Y());
+		}
 	}
 	//console.log("2", isHiding, x2, y2, ox2, oy2);
 	
 	// Calc $page
 	var ox3 = ox2,
-		oy3 = 0,
+		oy3 = ((isGoRight && !r2LTZero) || (!isGoRight && r2LTZero) ? 0 : 100),
 		y3 = -y2,
 		r3, x3;
 	if (isHiding) {
@@ -577,7 +591,7 @@ Page.prototype.calcTransform = function calcTransform(startPoint, pullPoint, isH
 			w4 = boxSize.X(),
 			r4 = -r3,
 			ox4 = 0,
-			oy4 = 25,
+			oy4 = ((isGoRight && !r2LTZero) || (!isGoRight && r2LTZero) ? 25 : 75),
 			y4 = y2 - 0.25 * h4 + this.$page.scrollTop(),
 			sx4, x4, o4;
 		if (isGoRight) {
