@@ -20,7 +20,7 @@
 		}
 		.book .page {
 			background: white;
-			/*outline: 1px solid #0F0;*/
+			border: 1px solid #0F0;
 			height: 100%;
 			overflow: auto;
 			position: absolute;
@@ -28,7 +28,7 @@
 			width: 100%;
 		}
 		.book .clippage {
-			/*outline: 1px solid #0FF;*/
+			border: 1px solid #0FF;
 			height: 100%;
 			left: 0%;
 			overflow: hidden;
@@ -37,10 +37,10 @@
 			width: 100%;
 		}
 		.book .fakepage {
-			/*outline: 1px solid #00F;*/
+			border: 1px solid #00F;
 			height: 100%;
 			left: 0%;
-			overflow: visible;
+			/*overflow: visible;*/
 			position: absolute;
 			width: 100%;
 		}
@@ -58,9 +58,22 @@
 
 	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
 	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.18/jquery-ui.min.js"></script>
-	<script type="text/javascript" src="jquery.transform-0.9.3.js"></script>
+	<!--script type="text/javascript" src="jquery.transform-0.9.4.min.js"></script-->
+	<script src="/checkouts/transform/src/jquery.transform.js"></script>
+	<script src="/checkouts/transform/src/jquery.transform.attributes.js"></script>
+	<script src="/checkouts/transform/src/jquery.transform.animate.js"></script>
+	<script src="/checkouts/transform/src/jquery.angle.js"></script>
+	<script src="/checkouts/transform/src/jquery.matrix.js"></script>
+	<script src="/checkouts/transform/src/jquery.matrix.calculations.js"></script>
+	<script src="/checkouts/transform/src/jquery.matrix.functions.js"></script>
+	
 	<script type="text/javascript" src="run.js"></script>
+	<!--[if lte IE 8]>
+	<script type="text/javascript" src="animate-page-simple.js"></script>
+	<![endif]-->
+	<!--[if (!lte IE 8)]> -->
 	<script type="text/javascript" src="animate-page-complex.js"></script>
+	<!-- <![endif]-->
 
 </head>
 <body>

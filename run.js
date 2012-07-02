@@ -274,7 +274,7 @@ Page.prototype = {
 
 $(function () {
 	var book = new Book(document.getElementById("book"));
-	var $prev = $("<a href='#'>Previous</a>").on("click", function () { book.previousPage(); });
-	var $next = $("<a href='#'>Next</a>").on("click", function () { book.nextPage(); });
+	var $prev = $("<a href='#'>Previous</a>").on("click", function () { book.previousPage(); return false; });
+	var $next = $("<a href='#'>Next</a>").on("click", function () { book.nextPage(); return false; });
 	$("body").prepend($next).prepend($prev);
 });

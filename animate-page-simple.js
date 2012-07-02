@@ -1,29 +1,28 @@
 
 Page.prototype.animateShow = function (side) {
 	this.depth(6);
-	this.$fakepage.show();
+	this.show(side);
+	this.$page.css({left:"0px", top:"0px", width:"100%"}).transform({scaleX:0.1});
 	switch (side) {
 	case "left":
-		this.$fakepage.css({left:"0%", width:"50%"}).transform({scaleX:0, skewY:"90deg", origin:["bottom","right"]});
-		this.$fakepage.animate({scaleX:1, skewY:"0deg"},
-		{duration: 1000, easing: "easeOutExpo", complete: this._doBookUpdate});
+		this.$page.transform({skewY:"90deg", origin:["right","bottom"]});
 		break;
 	case "right":
-		this.$fakepage.css({left:"50%", width:"50%"}).transform({scaleX:0, skewY:"-90deg", origin:["bottom","left"]});
-		this.$fakepage.animate({scaleX:1, skewY:"0deg"},
-		{duration: 1000, easing: "easeOutExpo", complete: this._doBookUpdate});
+		this.$page.transform({skewY:"-90deg", origin:["left","bottom"]});
 		break;
 	}
+	this.$page.animate({scaleX:1, skewY:"0deg"},
+	{duration: 1000, easing: "easeOutExpo", complete: this._doBookUpdate});
 };
 
 Page.prototype.animateHide = function (side) {
 	var self = this;
 	this.depth(6);
-	this.$fakepage.css({width: "50%"}).transform({scaleX:1, skewY:"0deg"});
+	this.$page.css({left:"0%", width: "100%"}).transform({scaleX:1, skewY:"0deg"});
 	switch (side) {
 	case "left":
-		this.$fakepage.css({left:"0%"}).transform({origin:["bottom","right"]});
-		this.$fakepage.animate({scaleX:0, skewY:"90deg"},
+		this.$page.transform({origin:["right","bottom"]});
+		this.$page.animate({scaleX:0, skewY:"90deg"},
 			{duration: 1000, easing: "easeInExpo",
 			complete: function () {
 				self.hide();
@@ -31,8 +30,8 @@ Page.prototype.animateHide = function (side) {
 			}});
 		break;
 	case "right":
-		this.$fakepage.css({left:"50%"}).transform({origin:["bottom","left"]});
-		this.$fakepage.animate({scaleX:0, skewY:"-90deg"},
+		this.$page.transform({origin:["left","bottom"]});
+		this.$page.animate({scaleX:0, skewY:"-90deg"},
 			{duration: 1000, easing: "easeInExpo",
 			complete: function () {
 				self.hide();

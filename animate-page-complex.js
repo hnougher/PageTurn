@@ -149,6 +149,7 @@ Book.prototype.bookInit = function () {
 		var bookOffset = this.$book.offset();
 		if (e.clientX - bookOffset.left > this.$book.width() / 2) {
 			// Finishing right
+			console.warn("right");
 			if (isGoRight) {
 				var pageOffset = animatedHide.$fakepage.offset();
 				var bookMouse = new Point(e.clientX - pageOffset.left, e.clientY - pageOffset.top);
@@ -189,6 +190,7 @@ Book.prototype.bookInit = function () {
 		}
 		else {
 			// Finishing left
+			console.warn("left");
 			if (isGoRight) {
 				// Page not changed back
 				prevPP.pages.left && prevPP.pages.left.hide("left");
@@ -272,7 +274,6 @@ Page.prototype.prepairPage = function () {
 	this.$page.before(this.$fakepage);
 	this.$fakepage.append(this.$clippage);
 	this.$clippage.append(this.$page);
-	
 };
 
 Page.prototype.depth2 = Page.prototype.depth;
@@ -318,7 +319,7 @@ Page.prototype.finishShow = function (side, startPoint, fromPullPoint) {
 	var self = this;
 	switch (side) {
 	case "left":
-		var distOffsetX = this.$fakepage.width()*2 - fromPullPoint.X();
+		var distOffsetX = this.$fakepage.width() - fromPullPoint.X();
 		var distToMove = this.$fakepage.width()*2 - distOffsetX;
 		var distOffsetY = fromPullPoint.Y() - startPoint.Y();
 		console.log(startPoint._toString(), fromPullPoint._toString(), distOffsetX, distOffsetY, self.$fakepage.css("fake"));
@@ -329,6 +330,7 @@ Page.prototype.finishShow = function (side, startPoint, fromPullPoint) {
 			var xPoint = self.$fakepage.width() - distOffsetX - now;
 			var yLift = startPoint.Y() + distOffsetY * (1- now / distToMove);
 			//console.debug(now, distToMove, (now / distToMove));
+			//console.warn("step(%s) => yLift:%s, xPoint:%s, distOffsetX:%s", now, yLift, xPoint, distOffsetX);
 			self.calcTransform(startPoint, new Point(xPoint, yLift), false);
 		},
 		complete: function () {
@@ -383,7 +385,12 @@ Page.prototype.finishHide = function (side, startPoint, fromPullPoint) {
 			self._doBookUpdate();
 		}});
 		break;
-	case "right": this.$fakepage.css({left:"50%", width:"50%"}); break;
+	case "right":
+		console.log("right");
+		//this.$fakepage.css({left:"50%", width:"50%"}).transform({translate:[0,0],rotate:0});
+		this.postDrag("right");
+		this.hide("right");
+		break;
 	}
 	this.$fakepage.show();
 };
@@ -582,8 +589,8 @@ Page.prototype.calcTransform = function calcTransform(startPoint, pullPoint, isH
 	}
 	//console.log("3", isHiding, x3, y3, ox3, oy3);
 	
-	this.$clippage.transform({origin:[ox2 + "%", oy2 + "%"], translate:[x2 + "px", y2 + "px"], rotate:r2 + "rad"});
-	this.$page.transform({rotate:r3 + "rad", origin:[ox3 + "%", oy3 + "%"], translate:[x3 + "px", y3 + "px"]});
+	this.$clippage.transform({origin:[ox2 + "%", oy2 + "%"], translate:[x2 + "px", y2 + "px"], rotate:r2 + "rad"}, {forceMatrix:true});
+	this.$page.transform({rotate:r3 + "rad", origin:[ox3 + "%", oy3 + "%"], translate:[x3 + "px", y3 + "px"]}, {forceMatrix:true});
 	
 	// Calc $gradient if exists
 	if (this.$gradient) {
@@ -605,7 +612,7 @@ Page.prototype.calcTransform = function calcTransform(startPoint, pullPoint, isH
 		o4 = 1 - Math.abs(sx4);
 		
 		this.$gradient.css({top:0, left:0, width:w4+"px", height:h4+"px", opacity:o4})
-			.transform({origin:[ox4 + "%", oy4 + "%"], translate:[x4 + "px", y4 + "px"], rotate:r4 + "rad", scaleX: sx4});
+			.transform({origin:[ox4 + "%", oy4 + "%"], translate:[x4 + "px", y4 + "px"], rotate:r4 + "rad", scaleX: sx4}, {forceMatrix:true});
 	}
 };
 
