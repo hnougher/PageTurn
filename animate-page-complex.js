@@ -156,13 +156,14 @@ Book.prototype.bookInit = function () {
 				
 				// Page turned back
 				//this.currentPage.pages.left && this.currentPage.pages.left.delayHide("left");
-				this.currentPage.pages.left && this.currentPage.pages.left.finishHide("left", curDragStart, bookMouse);
+			//this.currentPage.pages.left && this.currentPage.pages.left.finishHide("left", curDragStart, bookMouse);
+				this.currentPage.pages.left && this.currentPage.pages.left.finishMovement("right", curDragStart, bookMouse, true);
 				this.currentPage.pages.right && this.currentPage.pages.right.delayHide("right");
 				this.currentPage = prevPP;
 				this.currentPage.pages.left && this.currentPage.pages.left.show("left");
 				//this.currentPage.pages.right && this.currentPage.pages.right.show("right");
 				/*this.previousPage();*/
-				this.currentPage.pages.right && this.currentPage.pages.right.finishShow("right", curDragStart, bookMouse);
+				this.currentPage.pages.right && this.currentPage.pages.right.finishMovement("right", curDragStart, bookMouse, false);
 			}
 			else {
 				// Page not changed forward
@@ -170,22 +171,24 @@ Book.prototype.bookInit = function () {
 				nextPP.pages.right && nextPP.pages.right.hide("right");
 				this.currentPage.pages.left && this.currentPage.pages.left.show("left");
 				this.currentPage.pages.right && this.currentPage.pages.right.show("right");
-		
-		// Cleanup
-		animatedShow.$gradient.remove();
-		//animatedHide.$gradient.remove();
-		if (isGoRight) {
-			animatedHide.postDrag("right");
-			animatedShow.postDrag("right");
-		}
-		else {
-			animatedHide.postDrag("left");
-			animatedShow.postDrag("left");
-		}
-		animatedHide.$page.removeClass("hiding");
-		animatedShow.$page.removeClass("showing");
-		animatedHide.depth(5);
-		animatedShow.depth(5);
+				
+				// Cleanup
+				// ############## TEMP #################
+				animatedShow.$gradient.remove();
+				//animatedHide.$gradient.remove();
+				if (isGoRight) {
+					animatedHide.postDrag("right");
+					animatedShow.postDrag("right");
+				}
+				else {
+					animatedHide.postDrag("left");
+					animatedShow.postDrag("left");
+				}
+				animatedHide.$page.removeClass("hiding");
+				animatedShow.$page.removeClass("showing");
+				animatedHide.depth(5);
+				animatedShow.depth(5);
+				// ############## ETEMP #################
 			}
 		}
 		else {
@@ -197,22 +200,24 @@ Book.prototype.bookInit = function () {
 				prevPP.pages.right && prevPP.pages.right.hide("right");
 				this.currentPage.pages.left && this.currentPage.pages.left.show("left");
 				this.currentPage.pages.right && this.currentPage.pages.right.show("right");
-		
-		// Cleanup
-		animatedShow.$gradient.remove();
-		//animatedHide.$gradient.remove();
-		if (isGoRight) {
-			animatedHide.postDrag("right");
-			animatedShow.postDrag("right");
-		}
-		else {
-			animatedHide.postDrag("left");
-			animatedShow.postDrag("left");
-		}
-		animatedHide.$page.removeClass("hiding");
-		animatedShow.$page.removeClass("showing");
-		animatedHide.depth(5);
-		animatedShow.depth(5);
+				
+				// Cleanup
+				// ############## TEMP #################
+				animatedShow.$gradient.remove();
+				//animatedHide.$gradient.remove();
+				if (isGoRight) {
+					animatedHide.postDrag("right");
+					animatedShow.postDrag("right");
+				}
+				else {
+					animatedHide.postDrag("left");
+					animatedShow.postDrag("left");
+				}
+				animatedHide.$page.removeClass("hiding");
+				animatedShow.$page.removeClass("showing");
+				animatedHide.depth(5);
+				animatedShow.depth(5);
+				// ############## ETEMP #################
 			}
 			else {
 				var pageOffset = animatedHide.$fakepage.offset();
@@ -221,7 +226,8 @@ Book.prototype.bookInit = function () {
 				// Page turned forward
 				this.currentPage.pages.left && this.currentPage.pages.left.delayHide("left");
 				//this.currentPage.pages.right && this.currentPage.pages.right.delayHide("right");
-				this.currentPage.pages.right && this.currentPage.pages.right.finishHide("right", curDragStart, bookMouse);
+			//this.currentPage.pages.right && this.currentPage.pages.right.finishHide("right", curDragStart, bookMouse);
+				this.currentPage.pages.right && this.currentPage.pages.right.finishMovement("left", curDragStart, bookMouse, true);
 				this.currentPage = nextPP;
 				//this.currentPage.pages.left && this.currentPage.pages.left.show("left");
 				this.currentPage.pages.right && this.currentPage.pages.right.show("right");
@@ -231,7 +237,7 @@ Book.prototype.bookInit = function () {
 				this.currentPage = nextPP;
 				this.currentPage.pages.left && this.currentPage.pages.left.animateShow("left");
 				this.currentPage.pages.right && this.currentPage.pages.right.animateShow("right");*/
-				this.currentPage.pages.left && this.currentPage.pages.left.finishShow("left", curDragStart, bookMouse);
+				this.currentPage.pages.left && this.currentPage.pages.left.finishMovement("left", curDragStart, bookMouse, false);
 			}
 		}
 		
@@ -315,7 +321,7 @@ Page.prototype.delayHide = function (side) {
 	window.setTimeout(function(){self.hide()}, 2000);
 };
 
-Page.prototype.finishShow = function (side, startPoint, fromPullPoint) {
+Page.prototype.finishMovement = function (side, startPoint, fromPullPoint, isHiding) {
 	var self = this;
 	switch (side) {
 	case "left":
@@ -331,13 +337,15 @@ Page.prototype.finishShow = function (side, startPoint, fromPullPoint) {
 			var yLift = startPoint.Y() + distOffsetY * (1- now / distToMove);
 			//console.debug(now, distToMove, (now / distToMove));
 			//console.warn("step(%s) => yLift:%s, xPoint:%s, distOffsetX:%s", now, yLift, xPoint, distOffsetX);
-			self.calcTransform(startPoint, new Point(xPoint, yLift), false);
+			self.calcTransform(startPoint, new Point(xPoint, yLift), isHiding);
 		},
 		complete: function () {
 			self.$fakepage.css({fake:0, left:"0%", width:"50%"});
 			self.$gradient.remove();
 			self.postDrag(side);
 			self._doBookUpdate();
+			if (isHiding)
+				self.hide(side);
 		}});
 		break;
 	case "right":
@@ -351,46 +359,17 @@ Page.prototype.finishShow = function (side, startPoint, fromPullPoint) {
 		step: function (now, fx) {
 			var xPoint = distOffsetX + now;
 			var yLift = startPoint.Y() + distOffsetY * (1- now / distToMove);
-			//console.debug(now, distToMove, (now / distToMove));
-			self.calcTransform(startPoint, new Point(xPoint, yLift), false);
+			//console.debug(now, distToMove, (now / distToMove), xPoint, yLift);
+			self.calcTransform(startPoint, new Point(xPoint, yLift), isHiding);
 		},
 		complete: function () {
 			self.$fakepage.css({fake:0, left:"50%", width:"50%"});
 			self.$gradient.remove();
 			self.postDrag(side);
 			self._doBookUpdate();
+			if (isHiding)
+				self.hide(side);
 		}});
-	}
-	this.$fakepage.show();
-};
-Page.prototype.finishHide = function (side, startPoint, fromPullPoint) {
-	var self = this;
-	switch (side) {
-	case "left":
-		var distOffsetX = this.$fakepage.width()*2 - fromPullPoint.X();
-		var distOffsetY = fromPullPoint.Y();
-		console.log(fromPullPoint, distOffsetX, distOffsetY);
-		
-		this.$fakepage.animate({fake:this.$fakepage.width()*2 - distOffsetX},
-		{duration: 2000,
-		step: function (now, fx) {
-			now = self.$fakepage.width() - distOffsetX - now;
-			var yLift = Math.sin((now + self.$fakepage.width()) / self.$fakepage.width() / 2 * Math.PI) * -distOffsetY;
-			self.calcTransform(startPoint, new Point(now, yLift), true);
-		},
-		complete: function () {
-			self.$fakepage.css({fake:0, left:"0%", width:"50%"});
-			self.$gradient.remove();
-			self.postDrag(side);
-			self._doBookUpdate();
-		}});
-		break;
-	case "right":
-		console.log("right");
-		//this.$fakepage.css({left:"50%", width:"50%"}).transform({translate:[0,0],rotate:0});
-		this.postDrag("right");
-		this.hide("right");
-		break;
 	}
 	this.$fakepage.show();
 };
