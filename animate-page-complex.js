@@ -155,14 +155,10 @@ Book.prototype.bookInit = function () {
 				var bookMouse = new Point(e.clientX - pageOffset.left, e.clientY - pageOffset.top);
 				
 				// Page turned back
-				//this.currentPage.pages.left && this.currentPage.pages.left.delayHide("left");
-			//this.currentPage.pages.left && this.currentPage.pages.left.finishHide("left", curDragStart, bookMouse);
 				this.currentPage.pages.left && this.currentPage.pages.left.finishMovement("right", curDragStart, bookMouse, true);
 				this.currentPage.pages.right && this.currentPage.pages.right.delayHide("right");
 				this.currentPage = prevPP;
 				this.currentPage.pages.left && this.currentPage.pages.left.show("left");
-				//this.currentPage.pages.right && this.currentPage.pages.right.show("right");
-				/*this.previousPage();*/
 				this.currentPage.pages.right && this.currentPage.pages.right.finishMovement("right", curDragStart, bookMouse, false);
 			}
 			else {
@@ -225,18 +221,9 @@ Book.prototype.bookInit = function () {
 				
 				// Page turned forward
 				this.currentPage.pages.left && this.currentPage.pages.left.delayHide("left");
-				//this.currentPage.pages.right && this.currentPage.pages.right.delayHide("right");
-			//this.currentPage.pages.right && this.currentPage.pages.right.finishHide("right", curDragStart, bookMouse);
 				this.currentPage.pages.right && this.currentPage.pages.right.finishMovement("left", curDragStart, bookMouse, true);
 				this.currentPage = nextPP;
-				//this.currentPage.pages.left && this.currentPage.pages.left.show("left");
 				this.currentPage.pages.right && this.currentPage.pages.right.show("right");
-				/*this.nextPage();*/
-				/*this.currentPage.pages.left && this.currentPage.pages.left.animateHide("left");
-				this.currentPage.pages.right && this.currentPage.pages.right.animateHide("right");
-				this.currentPage = nextPP;
-				this.currentPage.pages.left && this.currentPage.pages.left.animateShow("left");
-				this.currentPage.pages.right && this.currentPage.pages.right.animateShow("right");*/
 				this.currentPage.pages.left && this.currentPage.pages.left.finishMovement("left", curDragStart, bookMouse, false);
 			}
 		}
@@ -323,55 +310,29 @@ Page.prototype.delayHide = function (side) {
 
 Page.prototype.finishMovement = function (side, startPoint, fromPullPoint, isHiding) {
 	var self = this;
-	switch (side) {
-	case "left":
-		var distOffsetX = this.$fakepage.width() - fromPullPoint.X();
-		var distToMove = this.$fakepage.width()*2 - distOffsetX;
-		var distOffsetY = fromPullPoint.Y() - startPoint.Y();
-		console.log(startPoint._toString(), fromPullPoint._toString(), distOffsetX, distOffsetY, self.$fakepage.css("fake"));
-		
-		this.$fakepage.animate({fake:distToMove},
-		{duration: 2000,
-		step: function (now, fx) {
-			var xPoint = self.$fakepage.width() - distOffsetX - now;
-			var yLift = startPoint.Y() + distOffsetY * (1- now / distToMove);
-			//console.debug(now, distToMove, (now / distToMove));
-			//console.warn("step(%s) => yLift:%s, xPoint:%s, distOffsetX:%s", now, yLift, xPoint, distOffsetX);
-			self.calcTransform(startPoint, new Point(xPoint, yLift), isHiding);
-		},
-		complete: function () {
-			self.$fakepage.css({fake:0, left:"0%", width:"50%"});
-			self.$gradient.remove();
-			self.postDrag(side);
-			self._doBookUpdate();
-			if (isHiding)
-				self.hide(side);
-		}});
-		break;
-	case "right":
-		var distOffsetX = fromPullPoint.X();
-		var distToMove = this.$fakepage.width()*2 - distOffsetX;
-		var distOffsetY = fromPullPoint.Y() - startPoint.Y();
-		console.log(startPoint._toString(), fromPullPoint._toString(), distOffsetX, distOffsetY, self.$fakepage.css("fake"));
-		
-		this.$fakepage.animate({fake:distToMove},
-		{duration: 2000,
-		step: function (now, fx) {
-			var xPoint = distOffsetX + now;
-			var yLift = startPoint.Y() + distOffsetY * (1- now / distToMove);
-			//console.debug(now, distToMove, (now / distToMove), xPoint, yLift);
-			self.calcTransform(startPoint, new Point(xPoint, yLift), isHiding);
-		},
-		complete: function () {
-			self.$fakepage.css({fake:0, left:"50%", width:"50%"});
-			self.$gradient.remove();
-			self.postDrag(side);
-			self._doBookUpdate();
-			if (isHiding)
-				self.hide(side);
-		}});
-	}
-	this.$fakepage.show();
+	var sideLeft = (side == "left");
+	
+	var distOffsetX = (sideLeft ? this.$fakepage.width() - fromPullPoint.X() : fromPullPoint.X());
+	var distToMove = this.$fakepage.width()*2 - distOffsetX;
+	var distOffsetY = fromPullPoint.Y() - startPoint.Y();
+	//console.log(startPoint._toString(), fromPullPoint._toString(), distOffsetX, distOffsetY, self.$fakepage.css("fake"));
+	
+	this.$fakepage.show().animate({fake:distToMove},
+	{duration: 2000,
+	step: function (now, fx) {
+		var xPoint = (sideLeft ? self.$fakepage.width() - distOffsetX - now : distOffsetX + now);
+		var yLift = startPoint.Y() + distOffsetY * (1- now / distToMove);
+		//console.debug(now, distToMove, (now / distToMove), xPoint, yLift);
+		self.calcTransform(startPoint, new Point(xPoint, yLift), isHiding);
+	},
+	complete: function () {
+		self.$fakepage.css({fake:0, left:(sideLeft ? "0%" : "50%"), width:"50%"});
+		self.$gradient.remove();
+		self.postDrag(side);
+		self._doBookUpdate();
+		if (isHiding)
+			self.hide(side);
+	}});
 };
 
 Page.prototype.animateShow = function (side) {
