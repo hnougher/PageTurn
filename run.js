@@ -184,7 +184,7 @@ var Page = function (page, book) {
 	this.pageNumber = parseInt(this.$page.attr("page"));
 	this.$page.removeAttr("layout").removeAttr("page");
 	
-	this.prepairPage();
+	this.preparePage();
 	
 	if (this.pageNumber != 0)
 		this.hide(this.layout);
@@ -201,7 +201,7 @@ Page.prototype = {
 	layout: "left", // left, right, both
 	pageNumber: 0,
 	
-	prepairPage: function () {
+	preparePage: function () {
 		this.$fakepage = $("<div class='fakepage'>");
 		this.$page.before(this.$fakepage);
 		this.$fakepage.append(this.$page);

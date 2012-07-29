@@ -146,88 +146,35 @@ Book.prototype.bookInit = function () {
 		var nextPP = this.getPagePair(this.currentPage.pageNumber + 1);
 		
 		// Decide what side we are continuing to
-		var bookOffset = this.$book.offset();
-		if (e.clientX - bookOffset.left > this.$book.width() / 2) {
-			// Finishing right
-			console.warn("right");
-			if (isGoRight) {
-				var pageOffset = animatedHide.$fakepage.offset();
-				var bookMouse = new Point(e.clientX - pageOffset.left, e.clientY - pageOffset.top);
-				
-				// Page turned back
-				this.currentPage.pages.left && this.currentPage.pages.left.finishMovement("right", curDragStart, bookMouse, true);
-				this.currentPage.pages.right && this.currentPage.pages.right.delayHide("right");
-				this.currentPage = prevPP;
-				this.currentPage.pages.left && this.currentPage.pages.left.show("left");
-				this.currentPage.pages.right && this.currentPage.pages.right.finishMovement("right", curDragStart, bookMouse, false);
-			}
-			else {
-				// Page not changed forward
-				nextPP.pages.left && nextPP.pages.left.hide("left");
-				nextPP.pages.right && nextPP.pages.right.hide("right");
-				this.currentPage.pages.left && this.currentPage.pages.left.show("left");
-				this.currentPage.pages.right && this.currentPage.pages.right.show("right");
-				
-				// Cleanup
-				// ############## TEMP #################
-				animatedShow.$gradient.remove();
-				//animatedHide.$gradient.remove();
-				if (isGoRight) {
-					animatedHide.postDrag("right");
-					animatedShow.postDrag("right");
-				}
-				else {
-					animatedHide.postDrag("left");
-					animatedShow.postDrag("left");
-				}
-				animatedHide.$page.removeClass("hiding");
-				animatedShow.$page.removeClass("showing");
-				animatedHide.depth(5);
-				animatedShow.depth(5);
-				// ############## ETEMP #################
-			}
+		var continueRight = (e.clientX - this.$book.offset().left > this.$book.width() / 2),
+			pageOffset = animatedHide.$fakepage.offset(),
+			bookMouse = new Point(e.clientX - pageOffset.left, e.clientY - pageOffset.top);
+		//if (isGoRight && continueRight) {
+		if (isGoRight) {
+			console.debug("page started going right and is finishing right");
+			this.currentPage.pages.left && this.currentPage.pages.left.finishMovement("right", curDragStart, bookMouse, true);
+			this.currentPage.pages.right && this.currentPage.pages.right.delayHide("right");
+			this.currentPage = prevPP;
+			this.currentPage.pages.left && this.currentPage.pages.left.show("left");
+			this.currentPage.pages.right && this.currentPage.pages.right.finishMovement("right", curDragStart, bookMouse, false);
 		}
-		else {
-			// Finishing left
-			console.warn("left");
-			if (isGoRight) {
-				// Page not changed back
-				prevPP.pages.left && prevPP.pages.left.hide("left");
-				prevPP.pages.right && prevPP.pages.right.hide("right");
-				this.currentPage.pages.left && this.currentPage.pages.left.show("left");
-				this.currentPage.pages.right && this.currentPage.pages.right.show("right");
-				
-				// Cleanup
-				// ############## TEMP #################
-				animatedShow.$gradient.remove();
-				//animatedHide.$gradient.remove();
-				if (isGoRight) {
-					animatedHide.postDrag("right");
-					animatedShow.postDrag("right");
-				}
-				else {
-					animatedHide.postDrag("left");
-					animatedShow.postDrag("left");
-				}
-				animatedHide.$page.removeClass("hiding");
-				animatedShow.$page.removeClass("showing");
-				animatedHide.depth(5);
-				animatedShow.depth(5);
-				// ############## ETEMP #################
-			}
-			else {
-				var pageOffset = animatedHide.$fakepage.offset();
-				var bookMouse = new Point(e.clientX - pageOffset.left, e.clientY - pageOffset.top);
-				
-				// Page turned forward
-				this.currentPage.pages.left && this.currentPage.pages.left.delayHide("left");
-				this.currentPage.pages.right && this.currentPage.pages.right.finishMovement("left", curDragStart, bookMouse, true);
-				this.currentPage = nextPP;
-				this.currentPage.pages.right && this.currentPage.pages.right.show("right");
-				this.currentPage.pages.left && this.currentPage.pages.left.finishMovement("left", curDragStart, bookMouse, false);
-			}
+		//else if (!isGoRight && !continueRight) {
+		else if (!isGoRight) {
+			console.debug("page started going left and is finishing left");
+			this.currentPage.pages.left && this.currentPage.pages.left.delayHide("left");
+			this.currentPage.pages.right && this.currentPage.pages.right.finishMovement("left", curDragStart, bookMouse, true);
+			this.currentPage = nextPP;
+			this.currentPage.pages.right && this.currentPage.pages.right.show("right");
+			this.currentPage.pages.left && this.currentPage.pages.left.finishMovement("left", curDragStart, bookMouse, false);
 		}
+		/*else if (isGoRight && !continueRight) {
+			console.debug("page started going right and is finishing left");
+		}
+		else if (!isGoRight && continueRight) {
+			console.debug("page started going left and is finishing right");
+		}*/
 		
+		// Cleanup mouse moving process
 		curDragStart = false;
 		animatedHide = null;
 		animatedShow = null;
@@ -260,7 +207,7 @@ Book.prototype.doUpdate = function () {
 };
 
 
-Page.prototype.prepairPage = function () {
+Page.prototype.preparePage = function () {
 	// Add extra layers for masking in animation
 	this.$fakepage = $("<div class='fakepage'>");
 	this.$clippage = $("<div class='clippage'>");
@@ -327,7 +274,8 @@ Page.prototype.finishMovement = function (side, startPoint, fromPullPoint, isHid
 	},
 	complete: function () {
 		self.$fakepage.css({fake:0, left:(sideLeft ? "0%" : "50%"), width:"50%"});
-		self.$gradient.remove();
+		if (typeof self.$gradient != "undefined")
+			self.$gradient.remove();
 		self.postDrag(side);
 		self._doBookUpdate();
 		if (isHiding)
@@ -390,8 +338,8 @@ Page.prototype.animateHide = function (side) {
 	this.$page.addClass("hiding");
 	
 	// Add gradient
-	this.$gradient = this.getGradElement("black", "transparent");
-	this.$page.append(this.$gradient);
+	//this.$gradient = this.getGradElement("black", "transparent");
+	//this.$page.append(this.$gradient);
 	
 	this.$fakepage.transform({scaleX:1, skewY:"0deg"});
 	switch (side) {
@@ -408,7 +356,7 @@ Page.prototype.animateHide = function (side) {
 		complete: function () {
 			self.hide();
 			self.$fakepage.css({fake:0, left:"50%", width:"50%"});
-			self.$gradient.remove();
+			//self.$gradient.remove();
 			self.postDrag(side);
 			self._doBookUpdate();
 		}});
@@ -427,7 +375,7 @@ Page.prototype.animateHide = function (side) {
 		complete: function () {
 			self.hide();
 			self.$fakepage.css({fake:0, left:"0%", width:"50%"});
-			self.$gradient.remove();
+			//self.$gradient.remove();
 			self.postDrag(side);
 			self._doBookUpdate();
 		}});
@@ -529,8 +477,8 @@ Page.prototype.calcTransform = function calcTransform(startPoint, pullPoint, isH
 	}
 	//console.log("3", isHiding, x3, y3, ox3, oy3);
 	
-	this.$clippage.transform({origin:[ox2 + "%", oy2 + "%"], translate:[x2 + "px", y2 + "px"], rotate:r2 + "rad"}, {forceMatrix:true});
-	this.$page.transform({rotate:r3 + "rad", origin:[ox3 + "%", oy3 + "%"], translate:[x3 + "px", y3 + "px"]}, {forceMatrix:true});
+	this.$clippage.transform({origin:[ox2 + "%", oy2 + "%"], translate:[x2 + "px", y2 + "px"], rotate:r2 + "rad"});
+	this.$page.transform({rotate:r3 + "rad", origin:[ox3 + "%", oy3 + "%"], translate:[x3 + "px", y3 + "px"]});
 	
 	// Calc $gradient if exists
 	if (this.$gradient) {
@@ -552,7 +500,7 @@ Page.prototype.calcTransform = function calcTransform(startPoint, pullPoint, isH
 		o4 = 1 - Math.abs(sx4);
 		
 		this.$gradient.css({top:0, left:0, width:w4+"px", height:h4+"px", opacity:o4})
-			.transform({origin:[ox4 + "%", oy4 + "%"], translate:[x4 + "px", y4 + "px"], rotate:r4 + "rad", scaleX: sx4}, {forceMatrix:true});
+			.transform({origin:[ox4 + "%", oy4 + "%"], translate:[x4 + "px", y4 + "px"], rotate:r4 + "rad", scaleX: sx4});
 	}
 };
 
