@@ -23,6 +23,7 @@
 			border: 1px solid #0F0;
 			height: 100%;
 			overflow: auto;
+			pointer-events: auto; /* Firefox,Chrome,Safari */
 			position: absolute;
 			top: 0%;
 			width: 100%;
@@ -32,6 +33,7 @@
 			height: 100%;
 			left: 0%;
 			overflow: hidden;
+			pointer-events: none; /* Firefox,Chrome,Safari */
 			position: absolute;
 			top: 0%;
 			width: 100%;
@@ -41,6 +43,7 @@
 			height: 100%;
 			left: 0%;
 			/*overflow: visible;*/
+			pointer-events: none; /* Firefox,Chrome,Safari */
 			position: absolute;
 			width: 100%;
 		}
@@ -57,7 +60,7 @@
 	</style>
 
 	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
-	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.18/jquery-ui.min.js"></script>
+	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.21/jquery-ui.min.js"></script>
 	<!--script type="text/javascript" src="jquery.transform-0.9.4.min.js"></script-->
 	<script src="/checkouts/transform/src/jquery.transform.js"></script>
 	<script src="/checkouts/transform/src/jquery.transform.attributes.js"></script>
@@ -74,6 +77,15 @@
 	<!--[if (!lte IE 8)]> -->
 	<script type="text/javascript" src="animate-page-complex.js"></script>
 	<!-- <![endif]-->
+
+	<script type="text/javascript">
+	$(function () {
+		var book = new Book(document.getElementById("book"));
+		var $prev = $("<a href='#'>Previous</a>").on("click", function () { book.previousPage(); return false; });
+		var $next = $("<a href='#'>Next</a>").on("click", function () { book.nextPage(); return false; });
+		$("body").prepend($next).prepend($prev);
+	});
+	</script>
 
 </head>
 <body>

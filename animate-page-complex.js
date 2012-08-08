@@ -56,21 +56,32 @@ Line.prototype = {
 };
 
 
-Book.prototype.bookInit = function () {
-	this.navigateTo(0);
-	
-	// Add event listeners to page for picking up interaction
-	var self = this;
-	var $window = $(window);
-	$window.on("mousemove", function(e){return self.mousemove(e)});
-	$window.on("mousedown", function(e){return self.mousedown(e)});
-	$window.on("mouseup", function(e){return self.mouseup(e)});
-};
+Book.prototype.bookInit = (function(){
+	var parentInit = Book.prototype.bookInit;
+	return function () {
+		parentInit.apply(this);
+		
+		// Add event listeners to page for picking up interaction
+		var self = this;
+		var $window = $(window);
+		$window.on("click", function(e){return self.cancelIfActive(e)});
+		$window.on("mousemove", function(e){self.mousemove(e); return self.cancelIfActive(e)});
+		$window.on("mousedown", function(e){self.mousedown(e); return self.cancelIfActive(e)});
+		$window.on("mouseup", function(e){self.mouseup(e); return self.cancelIfActive(e)});
+	};
+})();
 (function(){//NS
 	var curDragStart = false;
 	var animatedHide = null;
 	var animatedShow = null;
 	var isGoRight = false;
+	Book.prototype.cancelIfActive = function (e) {
+		//if (!curDragStart) return true;
+		e.preventDefault();
+		e.stopPropagation();
+		e.stopImmediatePropagation();
+		return false;
+	};
 	Book.prototype.mousemove = function (e) {
 		if (curDragStart) {
 			var pageOffset = animatedHide.$fakepage.offset();
@@ -93,7 +104,6 @@ Book.prototype.bookInit = function () {
 		} else {
 			this.$book.css("backgroundImage", "");
 		}*/
-		return false;
 	};
 	Book.prototype.mousedown = function (e) {
 		isGoRight = (this.$book.offset().left + this.$book.width() / 2 > e.clientX);
@@ -103,7 +113,7 @@ Book.prototype.bookInit = function () {
 		if ((isGoRight && this.currentPage.pageNumber <= 0) ||
 			(!isGoRight && this.currentPage.pageNumber >= this.AllPages.length - 1)) {
 			console && console.warn("Page turn is not allowed");
-			return;
+			return false;
 		}
 		
 		var prevPP = this.getPagePair(this.currentPage.pageNumber - 1);
@@ -136,7 +146,6 @@ Book.prototype.bookInit = function () {
 		curDragStart = new Point((isGoRight ? 0 : animatedHide.$fakepage.width()), e.clientY - pageOffset.top);
 		this.$book.addClass("book-turning");
 		this.mousemove(e);
-		return false;
 	};
 	Book.prototype.mouseup = function (e) {
 		// Are we really turning?
@@ -179,7 +188,6 @@ Book.prototype.bookInit = function () {
 		animatedHide = null;
 		animatedShow = null;
 		this.$book.removeClass("book-turning");
-		return false;
 	};
 })()//End-NS
 
@@ -287,6 +295,7 @@ Page.prototype.animateShow = function (side) {
 	var self = this;
 	this.depth(7);
 	this.$page.addClass("showing");
+			console.log("shgow started");
 	
 	// Add gradient
 	this.$gradient = this.getGradElement("white", "transparent");
@@ -306,6 +315,7 @@ Page.prototype.animateShow = function (side) {
 			self.calcTransform(new Point(self.$fakepage.width(), 0), new Point(now, yLift), false);
 		},
 		complete: function () {
+			console.log("shgow complete");
 			self.$fakepage.css({fake:0, left:"0%", width:"50%"});
 			self.$gradient.remove();
 			self.postDrag(side);
@@ -323,6 +333,7 @@ Page.prototype.animateShow = function (side) {
 			self.calcTransform(new Point(0, 0), new Point(now, yLift), false);
 		},
 		complete: function () {
+			console.log("shgow complete");
 			self.$fakepage.css({fake:0, left:"50%", width:"50%"});
 			self.$gradient.remove();
 			self.postDrag(side);

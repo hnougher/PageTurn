@@ -20,7 +20,14 @@
 };
 Book.prototype = {
 	bookInit: function () {
-		this.navigateTo(0);
+		var self = this;
+		this.navigateToURLHash();
+		
+		// We need to listen in on the page URI changes to allow hast links to work
+		// Requires http://benalman.com/projects/jquery-hashchange-plugin/
+		$(window).bind('hashchange', function(e) {
+			self.navigateToURLHash();
+		});
 	},
 	
 	// Finds the index of the page number in _AllPages or the next item in the list as negative index
@@ -62,6 +69,23 @@ Book.prototype = {
 		return page;
 	},
 	
+	// Looks at the current page URI and navigates to the # section name
+	navigateToURLHash: function () {
+		var name = document.location.href.match(/#(.*)$/);
+		if (name && name.length == 2)
+			this.navigateToName(name[1]);
+		else
+			this.navigateTo(0);
+	},
+	// Turns the page to show the first element with the given name
+	navigateToName: function (name) {
+		var $elem = $("[name=" + name + "]").eq(0);
+		console.log($elem);
+		var $page = $elem.parents(".page");
+		console.log($page);
+		this.navigateTo($page.data("PageOBJ").pageNumber);
+	},
+	// Turns to the given page number
 	navigateTo: function (page) {
 		// TODO: test page is valid
 		if (page < 0 || page >= this.AllPages.length) return;
@@ -179,7 +203,7 @@ var Page = function (page, book) {
 	var self = this;
 	this.book = book;
 	
-	this.$page = $(page).addClass("page");
+	this.$page = $(page).addClass("page").data("PageOBJ", this);
 	this.layout = this.$page.attr("layout");
 	this.pageNumber = parseInt(this.$page.attr("page"));
 	this.$page.removeAttr("layout").removeAttr("page");
@@ -272,9 +296,3 @@ Page.prototype = {
 	}
 };
 
-$(function () {
-	var book = new Book(document.getElementById("book"));
-	var $prev = $("<a href='#'>Previous</a>").on("click", function () { book.previousPage(); return false; });
-	var $next = $("<a href='#'>Next</a>").on("click", function () { book.nextPage(); return false; });
-	$("body").prepend($next).prepend($prev);
-});
