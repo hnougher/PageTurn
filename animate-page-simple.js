@@ -1,6 +1,6 @@
 
 Page.prototype.animateShow = function (side) {
-	this.depth(6);
+	this.depth('top');
 	this.show(side);
 	this.$page.css({left:"0px", top:"0px", width:"100%"}).transform({scaleX:0.1});
 	switch (side) {
@@ -17,7 +17,7 @@ Page.prototype.animateShow = function (side) {
 
 Page.prototype.animateHide = function (side) {
 	var self = this;
-	this.depth(6);
+	this.depth('bot');
 	this.$page.css({left:"0%", width: "100%"}).transform({scaleX:1, skewY:"0deg"});
 	switch (side) {
 	case "left":

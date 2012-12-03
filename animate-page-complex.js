@@ -64,9 +64,11 @@ Book.prototype.bookInit = (function(){
 		// Add event listeners to page for picking up interaction
 		var self = this;
 		var $window = $(window);
-		$window.on("click", function(e){return self.cancelIfActive(e)});
+		//$window.on("click", function(e){return self.cancelIfActive(e)});
+		this.$book.on("click", function(e){return self.cancelIfActive(e)});
 		$window.on("mousemove", function(e){self.mousemove(e); return self.cancelIfActive(e)});
-		$window.on("mousedown", function(e){self.mousedown(e); return self.cancelIfActive(e)});
+		//$window.on("mousedown", function(e){self.mousedown(e); return self.cancelIfActive(e)});
+		this.$book.on("mousedown", function(e){self.mousedown(e); return self.cancelIfActive(e)});
 		$window.on("mouseup", function(e){self.mouseup(e); return self.cancelIfActive(e)});
 	};
 })();
@@ -78,7 +80,6 @@ Book.prototype.bookInit = (function(){
 	Book.prototype.cancelIfActive = function (e) {
 		//if (!curDragStart) return true;
 		e.preventDefault();
-		e.stopPropagation();
 		e.stopImmediatePropagation();
 		return false;
 	};
@@ -108,31 +109,35 @@ Book.prototype.bookInit = (function(){
 	Book.prototype.mousedown = function (e) {
 		isGoRight = (this.$book.offset().left + this.$book.width() / 2 > e.clientX);
 		//console.log(isGoRight, this.currentPage.pageNumber, this.AllPages.length);
+		var isFirstPage = (this.currentPage.pageNumber == 0);
+		var isLastPage = (this.currentPage.pageNumber == this.AllPages.length - 1);
 		
 		// Validate page turn
-		if ((isGoRight && this.currentPage.pageNumber <= 0) ||
-			(!isGoRight && this.currentPage.pageNumber >= this.AllPages.length - 1)) {
+		if ((isGoRight && isFirstPage) || (!isGoRight && isLastPage)) {
 			console && console.warn("Page turn is not allowed");
 			return false;
 		}
 		
-		var prevPP = this.getPagePair(this.currentPage.pageNumber - 1);
-		var nextPP = this.getPagePair(this.currentPage.pageNumber + 1);
+		var prevPP, nextPP;
+		if (!isFirstPage)
+			prevPP = this.getPagePair(this.currentPage.pageNumber - 1);
+		if (!isLastPage)
+			nextPP = this.getPagePair(this.currentPage.pageNumber + 1);
 		
 		var underPage = (isGoRight ? prevPP.pages.left : nextPP.pages.right);
 		if (underPage) {
 			underPage.show(isGoRight ? "left" : "right");
-			underPage.depth(5);
+			underPage.depth('norm');
 		}
 		
 		animatedShow = (isGoRight ? prevPP.pages.right : nextPP.pages.left);
 		animatedShow.show(!isGoRight ? "right" : "left");
-		animatedShow.depth(7);
+		animatedShow.depth('top');
 		animatedShow.$page.addClass("showing");
 		animatedShow.preDrag(!isGoRight ? "right" : "left");
 		
 		animatedHide = (isGoRight ? this.currentPage.pages.left : this.currentPage.pages.right);
-		animatedHide.depth(6);
+		animatedHide.depth('bot');
 		animatedHide.$page.addClass("hiding");
 		animatedHide.preDrag(!isGoRight ? "right" : "left");
 		
@@ -151,8 +156,11 @@ Book.prototype.bookInit = (function(){
 		// Are we really turning?
 		if (!curDragStart) return; //NO
 		
-		var prevPP = this.getPagePair(this.currentPage.pageNumber - 1);
-		var nextPP = this.getPagePair(this.currentPage.pageNumber + 1);
+		var prevPP, nextPP;
+		if (this.currentPage.pageNumber != 0)
+			prevPP = this.getPagePair(this.currentPage.pageNumber - 1);
+		if (this.currentPage.pageNumber != this.AllPages.length - 1)
+			nextPP = this.getPagePair(this.currentPage.pageNumber + 1);
 		
 		// Decide what side we are continuing to
 		var continueRight = (e.clientX - this.$book.offset().left > this.$book.width() / 2),
@@ -224,40 +232,6 @@ Page.prototype.preparePage = function () {
 	this.$clippage.append(this.$page);
 };
 
-Page.prototype.depth2 = Page.prototype.depth;
-Page.prototype.depth = function (depth) {
-	if (typeof this.book.pageDepthStack == "undefined")
-		this.book.pageDepthStack = [];
-	
-	/* In this animate style there is 3 depths given: {5,6,7}
-	5 = normal page
-	6 = page being hiden via mask
-	7 = page being shown via mask
-	When something is set to 5 we need to remove the page from pageDepthStack.
-	Depth 6 pages get placed at bottom of pageDepthStack.
-	Depth 7 pages get placed at top of pageDepthStack. */
-	switch (depth) {
-	case 6:
-		this.book.pageDepthStack.unshift(this);
-		break;
-	case 7:
-		this.book.pageDepthStack.push(this);
-		break;
-	case 5:
-	default:
-		var a = $.inArray(this, this.book.pageDepthStack); /* IE8- does not have indexOf */
-		if (a >= 0)
-			this.book.pageDepthStack.splice(a, 1);
-		this.depth2(5);
-	}
-	
-	// Set each item in stack to depth 6 + index
-	for (var i = 0; i < this.book.pageDepthStack.length; i++)
-		this.book.pageDepthStack[i].depth2(6 + i);
-	
-	return this;
-};
-
 Page.prototype.delayHide = function (side) {
 	var self = this;
 	window.setTimeout(function(){self.hide()}, 2000);
@@ -293,7 +267,7 @@ Page.prototype.finishMovement = function (side, startPoint, fromPullPoint, isHid
 
 Page.prototype.animateShow = function (side) {
 	var self = this;
-	this.depth(7);
+	this.depth('top');
 	this.$page.addClass("showing");
 			console.log("shgow started");
 	
@@ -304,15 +278,16 @@ Page.prototype.animateShow = function (side) {
 	this.$fakepage.show();
 	switch (side) {
 	case "left":
-		this.$fakepage.css({left:"50%", width:"50%"}).transform({scaleX:1, skewY:"0deg"});
+		this.$fakepage.css({fake:0, left:"50%", width:"50%"}).transform({scaleX:1, skewY:"0deg"});
 		this.preDrag("right");
 		
-		this.$fakepage.animate({fake:this.$fakepage.width()*2},
+		this.$fakepage.animate({fake:1},
 		{duration: 2000,
 		step: function (now, fx) {
-			now = self.$fakepage.width() - now;
-			var yLift = Math.sin((now + self.$fakepage.width()) / self.$fakepage.width() / 2 * Math.PI) * -40;
-			self.calcTransform(new Point(self.$fakepage.width(), 0), new Point(now, yLift), false);
+			var xPoint = self.$fakepage.width() * (1 - now * 2);
+			var yLift = Math.sin(now * Math.PI) * -40;
+			//console.log("showLeft", now, xPoint, yLift);
+			self.calcTransform(new Point(self.$fakepage.width(), 0), new Point(xPoint, yLift), false);
 		},
 		complete: function () {
 			console.log("shgow complete");
@@ -326,11 +301,13 @@ Page.prototype.animateShow = function (side) {
 		this.$fakepage.css({fake:0, left:"0%", width:"50%"}).transform({scaleX:1, skewY:"0deg"});
 		this.preDrag("left");
 		
-		this.$fakepage.animate({fake:this.$fakepage.width()*2},
+		this.$fakepage.animate({fake:1},
 		{duration: 2000,
 		step: function (now, fx) {
-			var yLift = Math.sin(now / self.$fakepage.width() / 2 * Math.PI) * -40;
-			self.calcTransform(new Point(0, 0), new Point(now, yLift), false);
+			var xPoint = self.$fakepage.width() * 2 * now;
+			var yLift = Math.sin(now * Math.PI) * -40;
+			//console.log("showRight", self.$fakepage.width(), now, yLift);
+			self.calcTransform(new Point(0, 0), new Point(xPoint, yLift), false);
 		},
 		complete: function () {
 			console.log("shgow complete");
@@ -345,7 +322,7 @@ Page.prototype.animateShow = function (side) {
 
 Page.prototype.animateHide = function (side) {
 	var self = this;
-	this.depth(6);
+	this.depth('bot');
 	this.$page.addClass("hiding");
 	
 	// Add gradient
@@ -358,11 +335,13 @@ Page.prototype.animateHide = function (side) {
 		this.$fakepage.css({left:"0%", width:"50%"});
 		this.preDrag(side);
 		
-		this.$fakepage.animate({fake:this.$fakepage.width()*2},
+		this.$fakepage.animate({fake:1},
 		{duration: 2000,
 		step: function (now, fx) {
-			var yLift = Math.sin(now / self.$fakepage.width() / 2 * Math.PI) * -40;
-			self.calcTransform(new Point(0, 0), new Point(now, yLift), true);
+			var xPoint = self.$fakepage.width() * 2 * now;
+			var yLift = Math.sin(now * Math.PI) * -40;
+			//console.log("hideLeft", self.$fakepage.width(), now, yLift);
+			self.calcTransform(new Point(0, 0), new Point(xPoint, yLift), true);
 		},
 		complete: function () {
 			self.hide();
@@ -376,12 +355,13 @@ Page.prototype.animateHide = function (side) {
 		this.$fakepage.css({left:"50%", width:"50%"});
 		this.preDrag(side);
 		
-		this.$fakepage.animate({fake:this.$fakepage.width()*2},
+		this.$fakepage.animate({fake:1},
 		{duration: 2000,
 		step: function (now, fx) {
-			now = self.$fakepage.width() - now;
-			var yLift = Math.sin((now + self.$fakepage.width()) / self.$fakepage.width() / 2 * Math.PI) * -40;
-			self.calcTransform(new Point(self.$fakepage.width(), 0), new Point(now, yLift), true);
+			var xPoint = self.$fakepage.width() * (1 - now * 2);
+			var yLift = Math.sin(now * Math.PI) * -40;
+			//console.log("hideRight", now, xPoint, yLift);
+			self.calcTransform(new Point(self.$fakepage.width(), 0), new Point(xPoint, yLift), true);
 		},
 		complete: function () {
 			self.hide();

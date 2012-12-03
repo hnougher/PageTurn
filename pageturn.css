@@ -1,0 +1,99 @@
+
+.PageTurn {
+	border: 1px solid #F00;
+	box-shadow: 5px 5px 15px rgba(0,0,0,0.5);
+	height: 600px;
+	position: absolute;
+	width: 800px;
+}
+
+/** This is the styling on the actual page.
+ * It will contain the actual page content which the user sees.
+ * NOTE: the height/width of this element should always be left up the page turning code. */
+.PageTurn .page {
+	background: white;
+	border: 1px solid #0F0;
+	box-shadow: 5px 5px 15px rgba(0,0,0,0.5);
+	display: block;
+	height: 100%;
+	margin: 0;
+	overflow: auto;
+	pointer-events: auto; /* Firefox,Chrome,Safari */
+	position: absolute;
+	top: 0%;
+	width: 100%;
+}
+.PageTurn.book-turning .page {
+	height: 50%;
+	overflow: hidden;
+	top: 25%;
+	width: 50%;
+}
+.PageTurn.book-turning .page.left {
+	left: 0%;
+}
+.PageTurn.book-turning .page.right {
+	left: 50%;
+}
+.PageTurn.book .page.showing {
+	box-shadow: 7px 7px 15px #000; /* IE9+ */
+}
+
+/** This is the styling for the intermediate clippage.
+ * It is used in the turning as a clipping rectangle. */
+.PageTurn .clippage {
+	border: 1px solid #0FF;
+	height: 100%;
+	left: 0%;
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+	pointer-events: none; /* Firefox,Chrome,Safari */
+	position: absolute;
+	top: 0%;
+	width: 100%;
+}
+.PageTurn.book-turning .clippage {
+	height: 200%;
+	top: -50%;
+	width: 200%;
+}
+.PageTurn.book-turning .clippage.left {
+	left: 0%;
+}
+.PageTurn.book-turning .clippage.right {
+	left: -1000%;
+}
+
+/** This is the styling for the base fakepage.
+ * This element shows where the page is currently situated. */
+.PageTurn .fakepage {
+	border: 1px solid #00F;
+	height: 100%;
+	left: 0%;
+	margin: 0;
+	padding: 0;
+	/*overflow: visible;*/
+	pointer-events: none; /* Firefox,Chrome,Safari */
+	position: absolute;
+	width: 50%;
+}
+.PageTurn .fakepage.left {
+	left: 0%;
+}
+.PageTurn .fakepage.right {
+	left: -1000%;
+}
+.PageTurn.book-turning .fakepage {
+}
+
+.PageTurn * {
+	-webkit-backface-visibility: hidden; /* anit-alias edge hack chrome */
+	outline: 1px solid transparent; /* anti-alias edge hack firefox */
+}
+/*.book .page.showing, .book .page.hiding {
+	overflow: hidden;
+}
+.book .page.showing {
+	box-shadow: 7px 7px 15px #000; / * IE9+ * /
+}*/

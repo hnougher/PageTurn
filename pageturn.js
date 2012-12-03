@@ -1,14 +1,39 @@
-﻿var Book = function (book) {
-	var self = this;
-	this.$book = $(book);
-	this.$book.addClass("book");
+﻿/*(function ($) {*/
+
+$.fn.PageTurn = function (method) {
+	var $elem = this.eq(0);
+	switch (method) {
+	case "get":
+		return getBook($elem);
+		break;
+	default: // Create new book
+		return makeBook($elem);
+	}
+}
+
+var makeBook = function ($elem) {
+	if (typeof $elem.data("PageTurnOBJ") == "undefined") {
+		var book = new Book($elem);
+		$elem.data("PageTurnOBJ", book).addClass("PageTurn");
+		return book;
+	}
+	return getBook($elem);
+}
+var getBook = function ($elem) {
+	var book = $elem.data("PageTurnOBJ");
+	if (typeof book == "undefined")
+		throw "Not actually a book object!";
+	return book;
+}
+
+var Book = function ($book) {
+	this.$book = $book;
 	this.AllPages = [];
-	this.isUpdating = false;
 	
-	var children = this.$book.children();
+	var children = $book.children();
 	for (var i = 0; i < children.length; i++) {
 		var p = new Page(children.eq(i), this);
-		var pp = this.getPagePair(p.pageNumber);
+		var pp = this.getPagePair(p.pageNumber, true);
 		pp.addPage(p);
 	}
 	
@@ -44,46 +69,42 @@ Book.prototype = {
 			return false;
 		return (this.AllPages[index].pageNumber == pageNumber);
 	},
-	getPagePair: function (pageNumber) {
+	getPagePair: function (pageNumber, createIfNotExist) {
 		var indexFound = this.findGEPageIndex(pageNumber);
 		
 		// Already exists
 		if (this.isPageIndex(indexFound, pageNumber))
 			return this.AllPages[indexFound];
 		
-		// Make a new pagePair
-		var page = new PagePair(pageNumber);
-		
-		// Fix Prev/Next page sets
-		/*if (indexFound > 0) {
-			page.prevPage = this.AllPages[indexFound - 1];
-			this.AllPages[indexFound - 1].nextPage = page;
+		if (!createIfNotExist) {
+			// It will die anyway so crash on this console in IE
+			console.error("Page index " + pageNumber + " does not exist!");
+			throw "Page index " + pageNumber + " does not exist!";
 		}
-		if (indexFound < this.AllPages.length) {
-			page.nextPage = this.AllPages[indexFound];
-			this.AllPages[indexFound].prevPage = page;
-		}*/
 		
 		// Insert new pagePair
+		var page = new PagePair(pageNumber);
 		this.AllPages.splice(indexFound, 0, page);
 		return page;
 	},
 	
 	// Looks at the current page URI and navigates to the # section name
 	navigateToURLHash: function () {
-		var name = document.location.href.match(/#(.*)$/);
-		if (name && name.length == 2)
-			this.navigateToName(name[1]);
-		else
-			this.navigateTo(0);
+		var name = document.location.href.match(/#(.+)$/);
+		if (name && name.length == 2) {
+			if (this.navigateToName(name[1]))
+				return;
+		}
+		this.navigateTo(0);
 	},
 	// Turns the page to show the first element with the given name
 	navigateToName: function (name) {
 		var $elem = $("[name=" + name + "]").eq(0);
-		console.log($elem);
+		if (!$elem.length) return false;
 		var $page = $elem.parents(".page");
-		console.log($page);
+		if (!$page.length) return false;
 		this.navigateTo($page.data("PageOBJ").pageNumber);
+		return true;
 	},
 	// Turns to the given page number
 	navigateTo: function (page) {
@@ -217,7 +238,7 @@ var Page = function (page, book) {
 		//this.show(this.layout);
 	
 	this._doBookUpdate = function (e) {
-		self.depth(5);
+		self.depth('norm');
 		self.book.doUpdate();
 	};
 }
@@ -231,7 +252,39 @@ Page.prototype = {
 		this.$fakepage.append(this.$page);
 	},
 	
-	depth: function (depth) {
+	depth: function (type) {
+		if (typeof this.book.pageDepthStack == "undefined")
+			this.book.pageDepthStack = [];
+		
+		/* In this animate style there is 3 depths given: {'norm','bot','top'}
+		'norm' = normal page
+		'bot' = page being hiden via mask
+		'top' = page being shown via mask
+		When something is set to 'norm' we need to remove the page from pageDepthStack.
+		Depth 'bot' pages get placed at bottom of pageDepthStack.
+		Depth 'top' pages get placed at top of pageDepthStack. */
+		switch (type) {
+		case 'bot':
+			this.book.pageDepthStack.unshift(this);
+			break;
+		case 'top':
+			this.book.pageDepthStack.push(this);
+			break;
+		case 'norm':
+		default:
+			var a = $.inArray(this, this.book.pageDepthStack); /* IE8- does not have indexOf */
+			if (a >= 0)
+				this.book.pageDepthStack.splice(a, 1);
+			this.depth2(5);
+		}
+		
+		// Set each item in stack to depth 6 + index
+		for (var i = 0; i < this.book.pageDepthStack.length; i++)
+			this.book.pageDepthStack[i].depth2(6 + i);
+		
+		return this;
+	},
+	depth2: function (depth) {
 		if (depth == undefined)
 			return this.$fakepage.css("z-index");
 		//console.log("set depth", depth, "page", this.page);
@@ -255,7 +308,7 @@ Page.prototype = {
 	},
 	
 	animateShow: function (side) {
-		this.depth(6);
+		this.depth('top');
 		this.$fakepage.show();
 		switch (side) {
 		case "left":
@@ -272,7 +325,7 @@ Page.prototype = {
 	},
 	animateHide: function (side) {
 		var self = this;
-		this.depth(6);
+		this.depth('bot');
 		switch (side) {
 		case "left":
 			this.$fakepage.css({left:"0%", width: "50%"});
@@ -296,3 +349,4 @@ Page.prototype = {
 	}
 };
 
+/*})(jQuery);*/
